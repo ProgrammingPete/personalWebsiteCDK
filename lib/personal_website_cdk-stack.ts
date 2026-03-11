@@ -1,16 +1,69 @@
 import * as cdk from 'aws-cdk-lib/core';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Bucket, BlockPublicAccess } from 'aws-cdk-lib/aws-s3';
+import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
+import { ICertificateRef } from 'aws-cdk-lib/aws-certificatemanager';
+import { Distribution, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
+import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53_target from 'aws-cdk-lib/aws-route53-targets';
+import path from 'path/win32';
+import { config } from 'process';
+
+interface PersonalWebsiteCdkStackProps extends cdk.StackProps {
+  readonly domainName: string;
+  readonly certificate: ICertificateRef;
+  readonly hostedZone: route53.IHostedZone;
+}
 
 export class PersonalWebsiteCdkStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: PersonalWebsiteCdkStackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+        const hostingBucket = new Bucket(this, 'FrontendBucket', {
+            bucketName: 'personal-website-peterparianos-bucket',
+            autoDeleteObjects: true,
+            blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+            publicReadAccess: false,
+            removalPolicy: RemovalPolicy.DESTROY,
+        });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'PersonalWebsiteCdkQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+        const distribution = new Distribution(this, 'CloudfrontDistribution', {
+            defaultBehavior: {
+                origin: cloudfront_origins.S3BucketOrigin.withOriginAccessControl(hostingBucket),
+                viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            },
+            defaultRootObject: 'index.html',
+            domainNames: [props.domainName, `www.${props.domainName}`],
+            certificate: props.certificate,
+            errorResponses: [
+                {
+                    httpStatus: 404,
+                    responseHttpStatus: 200,
+                    responsePagePath: '/index.html',
+                },
+            ],
+            comment: 'CloudFront distribution for personal website',
+        });
+
+        const aRecord = new route53.ARecord(this, 'ARecordFrontend', {
+          target: route53.RecordTarget.fromAlias(new route53_target.CloudFrontTarget(distribution)),
+          zone: props.hostedZone,
+          comment: `A Record for Personal Website Frontend`
+        });
+
+        new CfnOutput(this, 'ARecord', { value: aRecord.domainName });
+
+
+        const deploymentSources = [
+          s3deploy.Source.asset(path.join(__dirname, "../../personalWebsiteFrontend/build")),
+        ];
+        
+        new s3deploy.BucketDeployment(this, "DeployWebsite", {
+          sources: deploymentSources,
+          destinationBucket: hostingBucket,
+          distribution: distribution
+        });
   }
 }
