@@ -18,7 +18,6 @@ export interface ContactFormStackProps extends cdk.StackProps {
 }
 
 export class ContactFormStack extends cdk.Stack {
-  public readonly apiEndpoint: string;
 
   constructor(scope: Construct, id: string, props: ContactFormStackProps) {
     super(scope, id, props);
@@ -29,7 +28,7 @@ export class ContactFormStack extends cdk.Stack {
     const contactFormHandler = new lambda.Function(this, 'ContactFormHandler', {
       runtime: lambda.Runtime.JAVA_21,
       memorySize: 512,
-      handler: 'com.website.contact.ContactFormHandler::handleRequest',
+      handler: 'com.personalwebsite.contact.ContactFormHandler::handleRequest',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../personalWebsiteContactFormLambda/build/libs/contact-form-handler-all.jar')),
       environment: {
         RECIPIENT_EMAIL: props.recipientEmail,
@@ -67,7 +66,7 @@ export class ContactFormStack extends cdk.Stack {
     const CnameRecord = new route53.CnameRecord(this, 'ApiCnameRecord', {
       zone: props.hostedZone,
       recordName: 'api',
-      domainName: httpApi.apiEndpoint.replace('https://', ''),
+      domainName: dn.regionalDomainName,
     });
 
     new CfnOutput(this, 'ApiCnameRecordOutput', {
@@ -108,11 +107,9 @@ export class ContactFormStack extends cdk.Stack {
       description: 'The endpoint URL for the contact form API',
     });
 
-    new CfnOutput(this, 'ContactFormApiDomain', {
+    new CfnOutput(this, 'ContactFormRegionalApiDomainEndpoint', {
       value: dn.regionalDomainName,
       description: 'The custom domain for the contact form API',
     });
-
-    this.apiEndpoint = httpApi.apiEndpoint;
   }
 }
