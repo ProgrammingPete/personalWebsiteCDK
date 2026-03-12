@@ -8,8 +8,7 @@ import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53_target from 'aws-cdk-lib/aws-route53-targets';
-import path from 'path/win32';
-import { config } from 'process';
+import path = require("path");
 
 interface PersonalWebsiteCdkStackProps extends cdk.StackProps {
   readonly domainName: string;
@@ -35,7 +34,7 @@ export class PersonalWebsiteCdkStack extends cdk.Stack {
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             },
             defaultRootObject: 'index.html',
-            domainNames: [props.domainName, `www.${props.domainName}`],
+            domainNames: [props.domainName],
             certificate: props.certificate,
             errorResponses: [
                 {

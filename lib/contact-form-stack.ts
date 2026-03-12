@@ -23,7 +23,7 @@ export class ContactFormStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ContactFormStackProps) {
     super(scope, id, props);
 
-    const ccEmail = 'peter.parianos@yahoo.com';
+    const ccEmail = 'pistolpetepcp@gmail.com';
 
     // Lambda function for processing contact form submissions
     const contactFormHandler = new lambda.Function(this, 'ContactFormHandler', {
@@ -70,7 +70,7 @@ export class ContactFormStack extends cdk.Stack {
       domainName: httpApi.apiEndpoint.replace('https://', ''),
     });
 
-    new CfnOutput(this, 'ApiCnameRecord', {
+    new CfnOutput(this, 'ApiCnameRecordOutput', {
       value: CnameRecord.domainName,
       description: 'The CNAME record for the API Gateway custom domain',
     });
