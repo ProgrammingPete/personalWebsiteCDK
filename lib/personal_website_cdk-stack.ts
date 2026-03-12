@@ -34,7 +34,7 @@ export class PersonalWebsiteCdkStack extends cdk.Stack {
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             },
             defaultRootObject: 'index.html',
-            domainNames: [props.domainName],
+            domainNames: [props.domainName, `www.${props.domainName}`],
             certificate: props.certificate,
             errorResponses: [
                 {

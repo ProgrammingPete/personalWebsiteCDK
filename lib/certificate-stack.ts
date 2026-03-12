@@ -25,7 +25,7 @@ export class CertificateAndHostedZoneStack extends cdk.Stack {
         const certificate = acm.Certificate.fromCertificateArn( // needs to be in us-east-1 for Cloudfront
             this, 
             'ImportedCert', 
-            "arn:aws:acm:us-east-1:029238154714:certificate/0cb3f3b7-8dfd-48c9-a0a6-bf4d98d93d1e"
+            "arn:aws:acm:us-east-1:029238154714:certificate/635db137-ab34-4b59-b1f1-e855dbda3f7b"
         );
         
         const apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
