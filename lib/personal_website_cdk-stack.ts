@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { Bucket, BlockPublicAccess } from 'aws-cdk-lib/aws-s3';
 import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
 import { ICertificateRef } from 'aws-cdk-lib/aws-certificatemanager';
-import { Distribution, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
+import { AllowedMethods, Distribution, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import * as cloudfront_origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as route53 from 'aws-cdk-lib/aws-route53';
@@ -32,10 +32,12 @@ export class PersonalWebsiteCdkStack extends cdk.Stack {
             defaultBehavior: {
                 origin: cloudfront_origins.S3BucketOrigin.withOriginAccessControl(hostingBucket),
                 viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS
             },
             defaultRootObject: 'index.html',
             domainNames: [props.domainName, `www.${props.domainName}`],
             certificate: props.certificate,
+            enableLogging: true,
             errorResponses: [
                 {
                     httpStatus: 404,

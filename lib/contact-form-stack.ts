@@ -22,8 +22,6 @@ export class ContactFormStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ContactFormStackProps) {
     super(scope, id, props);
 
-    const ccEmail = 'pistolpetepcp@gmail.com';
-
     // Lambda function for processing contact form submissions
     const contactFormHandler = new lambda.Function(this, 'ContactFormHandler', {
       runtime: lambda.Runtime.JAVA_21,
@@ -31,8 +29,7 @@ export class ContactFormStack extends cdk.Stack {
       handler: 'com.personalwebsite.contact.ContactFormHandler::handleRequest',
       code: lambda.Code.fromAsset(path.join(__dirname, '../../personalWebsiteContactFormLambda/build/libs/contact-form-handler-all.jar')),
       environment: {
-        RECIPIENT_EMAIL: props.recipientEmail,
-        CC_EMAIL: ccEmail
+        RECIPIENT_EMAIL: props.recipientEmail
       },
       timeout: cdk.Duration.seconds(30),
     });
@@ -87,18 +84,9 @@ export class ContactFormStack extends cdk.Stack {
       identity: ses.Identity.email(props.recipientEmail),
     });
 
-    const ccEmailIdentity = new ses.EmailIdentity(this, 'CCEmailIdentity', {
-      identity: ses.Identity.email(ccEmail),
-    });
-
     new CfnOutput(this, 'senderEmail.emailIdentityArn', {
       value: senderEmail.emailIdentityArn,
       description: 'The recipient email address for contact form submissions',
-    });
-
-    new CfnOutput(this, 'ccEmail.emailIdentityArn', {
-      value: ccEmailIdentity.emailIdentityArn,
-      description: 'The CC email address for contact form submissions',
     });
 
     // Output the API Gateway endpoint URL
