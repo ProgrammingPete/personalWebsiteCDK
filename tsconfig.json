@@ -1,10 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "ES2020",
+    "module": "commonjs",
     "lib": [
-      "es2022"
+      "es2020"
     ],
     "declaration": true,
     "strict": true,
@@ -25,8 +24,10 @@
       "./node_modules/@types"
     ],
     "types": [
-      "node"
-    ]
+      "node",
+      "jest"
+    ],
+    "outDir": "."
   },
   "exclude": [
     "node_modules",

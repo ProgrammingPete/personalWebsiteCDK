@@ -2,7 +2,7 @@
   "name": "personal_website_cdk",
   "version": "0.1.0",
   "bin": {
-    "personal_website_cdk": "bin/personal_website_cdk.js"
+    "personal_website_cdk": "bin/app.js"
   },
   "scripts": {
     "build": "tsc",
@@ -15,6 +15,7 @@
     "@types/node": "^24.10.1",
     "jest": "^30",
     "ts-jest": "^29",
+    "fast-check": "^3.23.2",
     "aws-cdk": "2.1110.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3"

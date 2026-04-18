@@ -1,0 +1,113 @@
+import { ApplicationConfig } from './configuration.types';
+
+export const config: ApplicationConfig = {
+  pipeline: {
+    pipelineAccountId: '111111111111',
+    pipelineRegion: 'us-east-2',
+    rootDomainName: 'example.com',
+    rootHostedZoneId: 'Z0123456789ABCDEFGHIJ',
+    rootDnsProvider: 'external',
+  },
+  repositories: {
+    cdk: {
+      owner: 'myuser',
+      name: 'personalWebsiteCDK',
+      branch: 'main',
+      connectionArn: 'arn:aws:codestar-connections:us-east-2:111111111111:connection/xxxxxxxx',
+    },
+    lambda: {
+      owner: 'myuser',
+      name: 'personalWebsiteLambda',
+      branch: 'main',
+      connectionArn: 'arn:aws:codestar-connections:us-east-2:111111111111:connection/xxxxxxxx',
+    },
+    frontend: {
+      owner: 'myuser',
+      name: 'personalWebsiteFrontend',
+      branch: 'main',
+      connectionArn: 'arn:aws:codestar-connections:us-east-2:111111111111:connection/xxxxxxxx',
+    },
+  },
+  build: {
+    nodeVersion: '20',
+    computeType: 'BUILD_GENERAL1_SMALL',
+  },
+  lambda: {
+    memorySize: 512,
+    timeout: 30,
+    architecture: 'arm64',
+  },
+  timeWindow: {
+    timezone: 'America/Los_Angeles',
+    blockedHourStart: 18,
+    blockedHourEnd: 6,
+    holidays: ['2025-01-01', '2025-07-04', '2025-12-25'],
+  },
+  stages: {
+    beta: {
+      accountId: '222222222222',
+      region: 'us-east-2',
+      dnsProvider: 'external',
+      website: {
+        domainName: 'beta.example.com',
+        wwwSubdomain: 'www.beta.example.com',
+        apiSubdomain: 'api.beta.example.com',
+        recipientEmail: 'contact@example.com',
+      },
+      cloudFrontPriceClass: 'PriceClass_100',
+      highSeverityAlarms: {
+        cloudFront5xxRate: 5,
+        cloudFront4xxRate: 15,
+        lambdaErrorRate: 5,
+        lambdaDurationP90: 10000,
+        apiGateway5xxRate: 5,
+        apiGatewayLatencyP90: 10000,
+        evaluationPeriods: 3,
+        datapointsToAlarm: 2,
+      },
+      lowSeverityAlarms: {
+        cloudFront5xxRate: 1,
+        cloudFront4xxRate: 10,
+        lambdaErrorRate: 1,
+        lambdaDurationP90: 5000,
+        apiGateway5xxRate: 1,
+        apiGatewayLatencyP90: 5000,
+        evaluationPeriods: 5,
+        datapointsToAlarm: 3,
+      },
+    },
+    prod: {
+      accountId: '333333333333',
+      region: 'us-east-2',
+      dnsProvider: 'external',
+      website: {
+        domainName: 'example.com',
+        wwwSubdomain: 'www.example.com',
+        apiSubdomain: 'api.example.com',
+        recipientEmail: 'contact@example.com',
+      },
+      cloudFrontPriceClass: 'PriceClass_100',
+      highSeverityAlarms: {
+        cloudFront5xxRate: 3,
+        cloudFront4xxRate: 10,
+        lambdaErrorRate: 3,
+        lambdaDurationP90: 5000,
+        apiGateway5xxRate: 3,
+        apiGatewayLatencyP90: 5000,
+        evaluationPeriods: 3,
+        datapointsToAlarm: 2,
+      },
+      lowSeverityAlarms: {
+        cloudFront5xxRate: 0.5,
+        cloudFront4xxRate: 5,
+        lambdaErrorRate: 0.5,
+        lambdaDurationP90: 3000,
+        apiGateway5xxRate: 0.5,
+        apiGatewayLatencyP90: 3000,
+        evaluationPeriods: 5,
+        datapointsToAlarm: 3,
+      },
+      bakeTimeMinutes: 30,
+    },
+  },
+};
