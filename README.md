@@ -5,14 +5,16 @@ A self-mutating AWS CDK pipeline that deploys a static website (S3 + CloudFront)
 ## Architecture
 
 ```
-GitHub (3 repos) → CodePipeline → Build (parallel) → Beta → Integration Tests → Time Window Check → Manual Approval → Prod → Bake Time Monitor
+GitHub (3 repos) → CodePipeline → Synth (build all + cdk synth) → Beta → Integration Tests → Time Window Check → Manual Approval → Prod → Bake Time Monitor
 ```
 
-The pipeline sources code from three GitHub repositories, builds artifacts in parallel, and deploys through two stages with safety gates:
+The pipeline sources code from three GitHub repositories, builds all artifacts inside the Synth step, and deploys through two stages with safety gates:
 
 - **CDK Repository** — Infrastructure code (this repo, TypeScript)
 - **Lambda Repository** — Contact form backend (Java 21, Gradle)
 - **Frontend Repository** — React website (Vite/npm)
+
+The Synth step pulls all three repos, builds the Lambda fat JAR (`./gradlew shadowJar`) and Frontend assets (`npm run build`), copies them into the CDK project's placeholder directories, then runs `cdk synth`. This ensures `lambda.Code.fromAsset()` and `s3deploy.Source.asset()` package the real built artifacts into the cloud assembly.
 
 ### What Gets Deployed
 
@@ -152,8 +154,10 @@ Add these as NS records for `beta.yourdomain.com` in your external DNS provider.
 │   └── stages/
 │       └── website-stage.ts            # CDK Stage grouping all stacks
 ├── lambda/
+│   ├── placeholder/                    # Placeholder for Lambda JAR (real JAR built by Synth step in pipeline)
 │   └── time-window-blocker/
 │       └── index.ts                    # Time window evaluation logic
+├── test-assets/                        # Placeholder for frontend assets (real assets built by Synth step in pipeline)
 ├── scripts/
 │   ├── bootstrap.sh                    # CDK bootstrap automation
 │   └── integration-test.sh             # Beta post-deployment smoke tests
