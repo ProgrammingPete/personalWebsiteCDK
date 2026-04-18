@@ -53,6 +53,92 @@ AWS Organizations
 - Three AWS accounts (Pipeline, Beta, Prod) with appropriate IAM credentials
 - Three GitHub repositories connected via [AWS CodeStar Connections](https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html)
 
+## Manual Infrastructure Setup
+
+The following resources must be created manually before deploying the pipeline. Everything else is provisioned by CDK.
+
+### 1. AWS Accounts
+
+Create three separate AWS accounts (or use existing ones):
+
+| Account | Purpose | Config field |
+|---|---|---|
+| **Pipeline** | Hosts CodePipeline, Route 53 root zone, SNS notifications | `pipeline.pipelineAccountId` |
+| **Beta** | Beta stage deployment target | `stages.beta.accountId` |
+| **Prod** | Prod stage deployment target | `stages.prod.accountId` |
+
+If you're using AWS Organizations, create these under separate OUs (Pipeline, Beta, Prod). This is optional but recommended for SCP isolation.
+
+### 2. GitHub Repositories
+
+Create two additional GitHub repositories (the CDK repo is this one):
+
+| Repository | Contents | Config field |
+|---|---|---|
+| **CDK** | This repo — already created | `repositories.cdk` |
+| **Lambda** | Java 21 contact form handler (Gradle project producing a fat JAR via `./gradlew shadowJar`) | `repositories.lambda` |
+| **Frontend** | React website (Vite or CRA, producing static assets via `npm run build`) | `repositories.frontend` |
+
+### 3. AWS CodeStar Connections
+
+Create a [CodeStar Connection](https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html) in the **Pipeline account** (us-east-2) to authorize CodePipeline to access your GitHub repositories:
+
+1. Go to **AWS Console → Developer Tools → Settings → Connections**
+2. Click **Create connection** → select **GitHub** → authorize the GitHub App
+3. Copy the Connection ARN (e.g., `arn:aws:codestar-connections:us-east-2:111111111111:connection/xxxxxxxx`)
+4. Paste it into `repositories.cdk.connectionArn`, `repositories.lambda.connectionArn`, and `repositories.frontend.connectionArn` in `configuration.ts`
+
+You can use a single connection for all three repos if they're under the same GitHub owner, or create separate connections if they're in different orgs.
+
+> **Important:** The connection must be in the **Available** status. A newly created connection starts as **Pending** until you complete the GitHub App authorization flow in the console.
+
+### 4. Domain Name
+
+You need a registered domain name (e.g., `example.com`). The pipeline supports two DNS setups:
+
+**Option A: Domain managed in Route 53 (`dnsProvider: 'route53'`)**
+1. Create a Route 53 public hosted zone for your root domain in the **Pipeline account**
+2. Update your domain registrar's nameservers to point to the Route 53 hosted zone NS records
+3. Set `pipeline.rootHostedZoneId` to the hosted zone ID
+4. The pipeline automatically creates NS delegation records for stage subdomains
+
+**Option B: Domain managed externally (`dnsProvider: 'external'`)**
+1. Keep your domain at your current registrar (Squarespace, Cloudflare, GoDaddy, etc.)
+2. Create a Route 53 public hosted zone for your root domain in the **Pipeline account** (this is still needed for ACM validation and stage subdomain zones)
+3. Set `pipeline.rootHostedZoneId` to that hosted zone ID
+4. After deployment, check CloudFormation outputs for NS records and add them to your external DNS provider manually
+
+### 5. SES Email Verification
+
+The contact form Lambda sends emails via Amazon SES. By default, new AWS accounts are in the [SES sandbox](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html), which means:
+
+1. **Verify the recipient email** — After the first deployment, SES sends a verification email to the address in `website.recipientEmail`. Click the verification link.
+2. **Request production access** (optional) — If you want the contact form to accept submissions from anyone (not just verified addresses), request SES production access in the Beta and Prod accounts.
+
+### 6. CDK Bootstrap
+
+Run the bootstrap script to set up cross-account trust between the Pipeline account and the target accounts:
+
+```bash
+./scripts/bootstrap.sh
+```
+
+This creates the `CDKToolkit` CloudFormation stack in each account/region with trust policies allowing the Pipeline account to deploy. See `./scripts/bootstrap.sh --help` for options like `--profile-pipeline`, `--profile-beta`, `--profile-prod`, and `--dry-run`.
+
+### Summary Checklist
+
+```
+[ ] Three AWS accounts created (Pipeline, Beta, Prod)
+[ ] Two GitHub repos created and pushed (Lambda, Frontend) — CDK repo is this repo
+[ ] CodeStar Connection created and in "Available" status
+[ ] Domain name registered
+[ ] Route 53 hosted zone created for root domain in Pipeline account
+[ ] lib/config/configuration.ts updated with real values
+[ ] ./scripts/bootstrap.sh executed successfully
+[ ] (After first deploy) SES recipient email verified
+[ ] (External DNS only) NS records added to external DNS provider
+```
+
 ## Quick Start
 
 ### 1. Install dependencies
